@@ -12,6 +12,6 @@ int init_module(void)
 }
 
 void cleanup_module(void)
-{
+{       
     printk("Module Removed\n");
 }  
