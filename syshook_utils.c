@@ -1,17 +1,13 @@
-struct sys_hook {
-    void** orig_func_pointer;
-    void* hook_func;
-    int sys_entry;
-};
+#include "syshook_utils.h"
 
-void set_page_rw(unsigned long addr)
+static void set_page_rw(unsigned long addr)
 {
     unsigned int level;
     pte_t *pte = lookup_address(addr, &level);
     if (pte->pte &~ _PAGE_RW) pte->pte |= _PAGE_RW;
 }
 
-void set_page_ro(unsigned long addr)
+static void set_page_ro(unsigned long addr)
 {
     unsigned int level;
     pte_t *pte = lookup_address(addr, &level);
