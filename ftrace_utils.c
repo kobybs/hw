@@ -1,24 +1,13 @@
 #include <linux/module.h>
-#include <linux/kernel.h>
 #include <linux/kallsyms.h>
-#include <linux/uaccess.h>
 #include <linux/unistd.h>
 #include <linux/slab.h>
-#include <linux/compiler.h>
 #include <linux/types.h>
 #include <linux/proc_fs.h>
 #include <linux/ftrace.h>
-#include <linux/socket.h>
-#include <net/sock.h>
 #include <linux/trace.h>
 #include <linux/seq_file.h>
-
-
-struct ftrace_hook {
-    void** orig_func_pointer;
-    void* hook_func;
-    struct ftrace_ops ops;
-};
+#include "ftrace_utils.h"
 
 static void notrace ftrace_callback (unsigned long ip, unsigned long parent_ip, 
     struct ftrace_ops *ops, struct pt_regs *regs)
@@ -31,19 +20,24 @@ static void notrace ftrace_callback (unsigned long ip, unsigned long parent_ip,
         regs->ip = (unsigned long) hook->hook_func;
 }
 
-static int undo_ftrace_hook(struct ftrace_hook* hook){
+int undo_ftrace_hook(struct ftrace_hook* hook){
     unregister_ftrace_function(&hook->ops);
     ftrace_set_filter_ip(&hook->ops, *((unsigned long*) hook->orig_func_pointer), true, false);
     
     return 0;
 }
 
-static int set_ftrace_hook(char* name, struct ftrace_hook* hook)
+int set_ftrace_hook(char* name, struct ftrace_hook* hook)
 {
     int res;
     
     // set ops fields
     hook->ops.func = ftrace_callback;
+
+    // FTRACE_OPS_FL_SAVE_REGS -    makes the callback regs pointer to point on the actuall reg values. 
+    //                              this is needed if we wish to read/modify the reg values.
+    // FTRACE_OPS_FL_IPMODIFY -     makes the regs->ip modifiable, so we can override the return address from the ftrace
+    //                              callback with our hook function address.
     hook->ops.flags = FTRACE_OPS_FL_SAVE_REGS
                     | FTRACE_OPS_FL_IPMODIFY;
 

