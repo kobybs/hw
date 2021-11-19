@@ -1,0 +1,13 @@
+q1:
+a.  printk   / acts differently based on the KERN level
+b.  In newer distributions:
+    obj-m += hellomod.o
+    all:
+        make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
+
+    clean:
+        make -C /lib/modules/$(shell uname -r)/build M=$(PWD) clean
+
+c.  Load a module:  inmod ./{modname}.ko
+    All loaded mods:  lsmod  OR  cat /proc/modules
+    Remove loaded module: rmmod ./{modname}.ko
